@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details - CineGenie</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="/homepage">CineGenie</a>
+            </div>
+            <div class="nav-links">
+                <a href="/homepage">Home</a>
+                <a href="/trending">Trending</a>
+                <a href="/new-releases">New Releases</a>
+                <a href="/recommendation">Recommendations</a>
+                <a href="/my_list">My List</a>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Search movies...">
+                <button onclick="searchMovies()">Search</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="movie-details-container" id="movieDetails">
+            <!-- Movie details will be loaded here -->
+        </div>
+    </main>
+
+    <script>
+        // Get movie ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const movieId = urlParams.get('id');
+
+        // Load movie details when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (movieId) {
+                try {
+                    await loadMovieDetails(movieId);
+                } catch (error) {
+                    console.error('Error loading movie details:', error);
+                    const detailsContainer = document.getElementById('movieDetails');
+                    detailsContainer.innerHTML = `
+                        <div class="error-message">
+                            <h2>Error Loading Movie Details</h2>
+                            <p>${error.message}</p>
+                            <a href="/homepage" class="back-button">Return to Home</a>
+                        </div>
+                    `;
+                }
+            } else {
+                const detailsContainer = document.getElementById('movieDetails');
+                detailsContainer.innerHTML = `
+                    <div class="error-message">
+                        <h2>Error Loading Movie Details</h2>
+                        <p>No movie ID provided</p>
+                        <a href="/homepage" class="back-button">Return to Home</a>
+                    </div>
+                `;
+            }
+        });
+
+        function isInMyList(movieId) {
+            const myList = JSON.parse(localStorage.getItem('myList') || '[]');
+            return myList.some(movie => movie.id === movieId);
+        }
+
+        async function loadMovieDetails(movieId) {
+            try {
+                if (!movieId) {
+                    throw new Error('No movie ID provided');
+                }
+                
+                const response = await fetch(`/api/movie/${movieId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.movie) {
+                    const movie = data.movie;
+                    const detailsContainer = document.getElementById('movieDetails');
+                    
+                    detailsContainer.innerHTML = `
+                        <div class="movie-details">
+                            <div class="movie-poster">
+                                <img src="${movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '/static/images/no-poster.jpg'}" 
+                                     alt="${movie.title}"
+                                     onerror="this.src='/static/images/no-poster.jpg'">
+                                <button class="add-to-list-btn" onclick="toggleMyList(${movie.id}, '${movie.title.replace(/'/g, "\\'")}', '${movie.poster_path || ''}', '${movie.release_date || ''}')">
+                                    ${isInMyList(movie.id) ? 'Remove from My List' : 'Add to My List'}
+                                </button>
+                            </div>
+                            <div class="movie-info">
+                                <h1>${movie.title}</h1>
+                                <div class="movie-meta">
+                                    <span>${movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}</span>
+                                    <span>${movie.runtime || 0} min</span>
+                                    <span class="rating">★ ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+                                </div>
+                                <div class="movie-genres">
+                                    ${movie.genres ? movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('') : ''}
+                                </div>
+                                <p class="movie-overview">${movie.overview || 'No overview available.'}</p>
+                                <div class="movie-cast">
+                                    <h3>Cast</h3>
+                                    <div class="cast-list">
+                                        ${movie.credits && movie.credits.cast ? movie.credits.cast.slice(0, 5).map(actor => `
+                                            <div class="cast-member">
+                                                <img src="${actor.profile_path ? `https://image.tmdb.org/t/p/w200${actor.profile_path}` : '/static/images/no-profile.jpg'}" 
+                                                     alt="${actor.name}"
+                                                     onerror="this.src='/static/images/no-profile.jpg'">
+                                                <span>${actor.name}</span>
+                                                <span class="character">${actor.character}</span>
+                                            </div>
+                                        `).join('') : '<p>No cast information available.</p>'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Failed to load movie details');
+                }
+            } catch (error) {
+                console.error('Error loading movie details:', error);
+                throw error; // Re-throw to be caught by the outer try-catch
+            }
+        }
+
+        function toggleMyList(movieId, title, posterPath, releaseDate) {
+            let myList = JSON.parse(localStorage.getItem('myList') || '[]');
+            const button = document.querySelector('.add-to-list-btn');
+            
+            if (isInMyList(movieId)) {
+                myList = myList.filter(movie => movie.id !== movieId);
+                button.textContent = 'Add to My List';
+            } else {
+                const movie = {
+                    id: movieId,
+                    title: title,
+                    poster_path: posterPath,
+                    release_date: releaseDate
+                };
+                myList.push(movie);
+                button.textContent = 'Remove from My List';
+            }
+            
+            localStorage.setItem('myList', JSON.stringify(myList));
+        }
+
+        function searchMovies() {
+            const query = document.getElementById('searchInput').value;
+            if (query.trim()) {
+                window.location.href = `/search?q=${encodeURIComponent(query)}`;
+            }
+        }
+    </script>
+</body>
+</html> 

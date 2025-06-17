@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Releases - CineGenie</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="/homepage">CineGenie</a>
+            </div>
+            <div class="nav-links">
+                <a href="/homepage">Home</a>
+                <a href="/trending">Trending</a>
+                <a href="/new-releases" class="active">New Releases</a>
+                <a href="/recommendation">Recommendations</a>
+                <a href="/my_list">My List</a>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Search movies...">
+                <button onclick="searchMovies()">Search</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="new-releases-section">
+            <h2>New Releases</h2>
+            <div class="movie-grid" id="newReleases">
+                <!-- Movies will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Fetch new releases when the page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/new-releases');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const moviesContainer = document.getElementById('newReleases');
+                    data.movies.forEach(movie => {
+                        const movieCard = createMovieCard(movie);
+                        moviesContainer.appendChild(movieCard);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching new releases:', error);
+                const moviesContainer = document.getElementById('newReleases');
+                moviesContainer.innerHTML = `
+                    <div class="error-message">
+                        Failed to load new releases. Please try again later.
+                    </div>
+                `;
+            }
+        });
+
+        function createMovieCard(movie) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            card.onclick = () => window.location.href = `/movie-details?id=${movie.id}`;
+            
+            const posterPath = movie.poster_path 
+                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                : '/static/images/no-poster.jpg';
+            
+            card.innerHTML = `
+                <img src="${posterPath}" alt="${movie.title}" onerror="this.src='/static/images/no-poster.jpg'">
+                <div class="movie-info">
+                    <h3>${movie.title}</h3>
+                    <p>${movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}</p>
+                    <div class="movie-rating">
+                        <span>★</span>
+                        <span>${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+                    </div>
+                    <button class="add-to-list-btn" onclick="event.stopPropagation(); toggleMyList(${movie.id}, '${movie.title.replace(/'/g, "\\'")}', '${movie.poster_path || ''}', '${movie.release_date || ''}')">
+                        ${isInMyList(movie.id) ? 'Remove from List' : 'Add to List'}
+                    </button>
+                </div>
+            `;
+            return card;
+        }
+
+        function isInMyList(movieId) {
+            const myList = JSON.parse(localStorage.getItem('myList') || '[]');
+            return myList.some(movie => movie.id === movieId);
+        }
+
+        function toggleMyList(movieId, title, posterPath, releaseDate) {
+            let myList = JSON.parse(localStorage.getItem('myList') || '[]');
+            
+            if (isInMyList(movieId)) {
+                myList = myList.filter(movie => movie.id !== movieId);
+            } else {
+                myList.push({
+                    id: movieId,
+                    title: title,
+                    poster_path: posterPath,
+                    release_date: releaseDate
+                });
+            }
+            
+            localStorage.setItem('myList', JSON.stringify(myList));
+            // Refresh the display
+            const button = document.querySelector(`[onclick*="toggleMyList(${movieId}"]`);
+            if (button) {
+                button.textContent = isInMyList(movieId) ? 'Remove from List' : 'Add to List';
+            }
+        }
+
+        function searchMovies() {
+            const query = document.getElementById('searchInput').value;
+            if (query.trim()) {
+                window.location.href = `/search?q=${encodeURIComponent(query)}`;
+            }
+        }
+    </script>
+</body>
+</html> 

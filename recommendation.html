@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CineGenie - Movie Recommendations</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="/homepage">CineGenie</a>
+            </div>
+            <div class="nav-links">
+                <a href="/homepage">Home</a>
+                <a href="/trending">Trending</a>
+                <a href="/new-releases">New Releases</a>
+                <a href="/recommendation" class="active">Recommendations</a>
+                <a href="/my_list">My List</a>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Search movies...">
+                <button onclick="searchMovies()">Search</button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="recommendation-page">
+        <section class="recommendation-section">
+            <h1>Movie Recommendations</h1>
+            
+            <!-- Mood-based Recommendations -->
+            <div class="recommendation-box">
+                <h2>How are you feeling today?</h2>
+                <p class="mood-description">Select your mood and we'll recommend movies that match your current vibe.</p>
+                <div class="mood-selector">
+                    <button class="mood-btn" data-mood="happy">😊 Happy</button>
+                    <button class="mood-btn" data-mood="sad">😢 Sad</button>
+                    <button class="mood-btn" data-mood="excited">🤩 Excited</button>
+                    <button class="mood-btn" data-mood="romantic">❤️ Romantic</button>
+                    <button class="mood-btn" data-mood="scared">😱 Scared</button>
+                    <button class="mood-btn" data-mood="inspired">✨ Inspired</button>
+                    <button class="mood-btn" data-mood="relaxed">😌 Relaxed</button>
+                </div>
+                <div id="mood-results" class="movie-grid"></div>
+            </div>
+
+            <!-- Genre-based Recommendations -->
+            <div class="recommendation-box">
+                <h2>Browse by Genre</h2>
+                <p class="genre-description">Explore movies from your favorite genres.</p>
+                <div class="genre-selector">
+                    <button class="genre-btn" data-genre="action">Action</button>
+                    <button class="genre-btn" data-genre="comedy">Comedy</button>
+                    <button class="genre-btn" data-genre="drama">Drama</button>
+                    <button class="genre-btn" data-genre="horror">Horror</button>
+                    <button class="genre-btn" data-genre="romance">Romance</button>
+                    <button class="genre-btn" data-genre="sci-fi">Sci-Fi</button>
+                    <button class="genre-btn" data-genre="thriller">Thriller</button>
+                </div>
+                <div id="genre-results" class="movie-grid"></div>
+            </div>
+
+            <!-- AI Recommendations -->
+            <div class="recommendation-box">
+                <h2>AI Recommendations</h2>
+                <p class="ai-description">Get personalized recommendations based on your mood and genre preferences.</p>
+                <div id="aiRecommendations" class="movie-grid"></div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 CineGenie. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+        const DEFAULT_POSTER = '/static/images/no-poster.svg';
+
+        function isInMyList(movieId) {
+            const myList = JSON.parse(localStorage.getItem('myList') || '[]');
+            return myList.some(movie => movie.id === movieId);
+        }
+
+        function toggleMyList(movieId, title, posterPath, releaseDate) {
+            let myList = JSON.parse(localStorage.getItem('myList') || '[]');
+            
+            if (isInMyList(movieId)) {
+                myList = myList.filter(movie => movie.id !== movieId);
+            } else {
+                myList.push({
+                    id: movieId,
+                    title: title,
+                    poster_path: posterPath,
+                    release_date: releaseDate
+                });
+            }
+            
+            localStorage.setItem('myList', JSON.stringify(myList));
+            // Refresh the display
+            getAIRecommendations();
+        }
+
+        function createMovieCard(movie) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            card.onclick = () => window.location.href = `/movie-details?id=${movie.id}`;
+            
+            const posterPath = movie.poster_path 
+                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                : '/static/images/no-poster.jpg';
+            
+            card.innerHTML = `
+                <img src="${posterPath}" alt="${movie.title}" onerror="this.src='/static/images/no-poster.jpg'">
+                <div class="movie-info">
+                    <h3>${movie.title}</h3>
+                    <p>${movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}</p>
+                    <div class="movie-rating">
+                        <span>★</span>
+                        <span>${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+                    </div>
+                    <button class="add-to-list-btn" onclick="event.stopPropagation(); toggleMyList(${movie.id}, '${movie.title.replace(/'/g, "\\'")}', '${movie.poster_path || ''}', '${movie.release_date || ''}')">
+                        ${isInMyList(movie.id) ? 'Remove from List' : 'Add to List'}
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function displayMovies(movies, containerId) {
+            const container = document.getElementById(containerId);
+            if (!movies || movies.length === 0) {
+                container.innerHTML = `
+                    <div class="no-movies">
+                        No movies found. Please try another mood or genre.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            movies.forEach(movie => {
+                const card = createMovieCard(movie);
+                container.appendChild(card);
+            });
+        }
+
+        function setActiveButton(button, selector) {
+            document.querySelectorAll(selector).forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+        }
+
+        async function getAIRecommendations() {
+            const container = document.getElementById('aiRecommendations');
+            container.innerHTML = '<div class="loading">Getting AI recommendations...</div>';
+
+            try {
+                const selectedMood = getSelectedMood();
+                const selectedGenres = getSelectedGenres();
+
+                if (!selectedMood && selectedGenres.length === 0) {
+                    container.innerHTML = `
+                        <div class="info-message">
+                            Please select a mood or genre to get recommendations.
+                        </div>
+                    `;
+                    return;
+                }
+
+                // If both mood and genres are selected, prioritize mood
+                const preferences = {
+                    mood: selectedMood,
+                    genres: selectedGenres
+                };
+
+                const response = await fetch('/api/recommendations/ai', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ preferences })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success && data.movies && data.movies.length > 0) {
+                    container.innerHTML = '';
+                    data.movies.forEach(movie => {
+                        const card = createMovieCard(movie);
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="error-message">
+                            ${data.error || 'No recommendations found. Try selecting different preferences.'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error getting AI recommendations:', error);
+                container.innerHTML = `
+                    <div class="error-message">
+                        Failed to get AI recommendations. Please try again.
+                        <br>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+
+        function getSelectedGenres() {
+            return Array.from(document.querySelectorAll('.genre-btn.active'))
+                .map(btn => btn.dataset.genre);
+        }
+
+        function getSelectedMood() {
+            const activeMood = document.querySelector('.mood-btn.active');
+            return activeMood ? activeMood.dataset.mood : null;
+        }
+
+        // Mood-based recommendations
+        document.querySelectorAll('.mood-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                getAIRecommendations();
+            });
+        });
+
+        // Genre-based recommendations
+        document.querySelectorAll('.genre-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                button.classList.toggle('active');
+                getAIRecommendations();
+            });
+        });
+
+        // Load AI recommendations when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            getAIRecommendations();
+        });
+
+        function searchMovies() {
+            const query = document.getElementById('searchInput').value;
+            if (query.trim()) {
+                window.location.href = `/search?q=${encodeURIComponent(query)}`;
+            }
+        }
+    </script>
+</body>
+</html>

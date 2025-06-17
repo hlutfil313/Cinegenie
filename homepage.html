@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineGenie - Your Movie Companion</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    :root {
+      --black: #141414;
+      --white: #fff;
+      --red: #e50914;
+      --gray-light: #b3b3b3;
+      --gray-dark: #404040;
+      --shadow-glow: 0 0 10px rgba(229, 9, 20, 0.8);
+      --transition-fast: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Reset */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--black);
+      color: var(--white);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* Navbar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background-color: rgba(20, 20, 20, 0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 2rem;
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--red);
+      letter-spacing: 0.05em;
+      user-select: none;
+    }
+
+    nav ul {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav a {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--white);
+      transition: color var(--transition-fast);
+    }
+
+    nav a:hover,
+    nav a:focus {
+      color: var(--red);
+    }
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      height: 75vh;
+      background-image: url('https://assets.nflxext.com/ffe/siteui/vlv3/7c647033-126a-48d7-8a13-9cfecad88c39/7bcf3575-4c1c-4cfe-89b7-b78eec1ba941/US-en-20230612-popsignuptwoweeks-perspective_alpha_website_medium.jpg');
+      background-size: cover;
+      background-position: center center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-left: 4rem;
+      color: var(--white);
+      user-select: none;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(20, 20, 20, 0.85) 15%, rgba(20, 20, 20, 0) 80%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      max-width: 600px;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin: 0 0 0.5rem 0;
+      line-height: 1.1;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.75);
+    }
+
+    .hero p {
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      color: var(--gray-light);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+    }
+
+    .hero button {
+      background-color: var(--red);
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--white);
+      cursor: pointer;
+      box-shadow: var(--shadow-glow);
+      transition: background-color var(--transition-fast), transform 0.25s ease;
+    }
+
+    .hero button:hover,
+    .hero button:focus {
+      background-color: #b00710;
+      transform: scale(1.05);
+      outline: none;
+    }
+
+    /* Rows for content */
+    section {
+      padding: 2rem 3rem;
+    }
+
+    section h2 {
+      font-weight: 700;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      user-select: none;
+    }
+
+    .row {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--gray-dark) transparent;
+      padding-bottom: 1rem;
+    }
+
+    .row::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .row::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .row::-webkit-scrollbar-thumb {
+      background-color: var(--gray-dark);
+      border-radius: 3px;
+    }
+
+    .card {
+      flex: 0 0 auto;
+      width: 160px;
+      border-radius: 0.375rem;
+      background-color: #222;
+      box-shadow: rgba(0, 0, 0, 0.7) 0 2px 8px;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .card img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      border-radius: 0.375rem;
+      user-select: none;
+    }
+
+    .card:hover,
+    .card:focus-within {
+      transform: scale(1.05);
+      box-shadow: rgba(229, 9, 20, 0.7) 0 5px 10px;
+      z-index: 10;
+      outline: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero {
+        height: 50vh;
+        padding-left: 1.5rem;
+      }
+
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .hero p {
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+      }
+
+      section {
+        padding: 1rem 1.5rem;
+      }
+
+      .card {
+        width: 120px;
+      }
+
+      .card img {
+        height: 180px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="nav-brand">
+        <a href="/homepage">CineGenie</a>
+      </div>
+      <div class="nav-links">
+        <a href="/homepage" class="active">Home</a>
+        <a href="/trending">Trending</a>
+        <a href="/new-releases">New Releases</a>
+        <a href="/recommendation">Recommendations</a>
+        <a href="/my_list">My List</a>
+      </div>
+      <div class="nav-search">
+        <input type="text" id="searchInput" placeholder="Search movies...">
+        <button onclick="searchMovies()">Search</button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Welcome to CineGenie</h1>
+        <p>Your personal movie companion</p>
+        <div class="search-container">
+          <input type="text" id="search-input" placeholder="Search for movies...">
+          <button onclick="searchMovies()">Search</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Movie of the Day -->
+    <section class="movie-of-the-day">
+      <h2>Movie of the Day</h2>
+      <div id="movie-of-the-day" class="movie-grid">
+        <div class="loading">Loading movie of the day...</div>
+      </div>
+    </section>
+
+    <!-- Popular Movies -->
+    <section class="popular-movies">
+      <h2>Popular Movies</h2>
+      <div id="popular-movies" class="movie-grid">
+        <div class="loading">Loading popular movies...</div>
+      </div>
+    </section>
+
+    <!-- New Releases -->
+    <section class="new-releases">
+      <h2>New Releases</h2>
+      <div id="new-releases" class="movie-grid">
+        <div class="loading">Loading new releases...</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE_URL = 'http://127.0.0.1:5000/api';
+
+    // Function to display a movie card
+    function createMovieCard(movie) {
+      return `
+        <div class="movie-card" onclick="window.location.href='/movie-details?id=${movie.id}'">
+          <img src="${movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : ''}"
+               alt="${movie.title}"
+               onerror="this.src=''">
+          <div class="movie-info">
+            <h3 class="movie-title">${movie.title}</h3>
+            <p class="movie-year">${movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}</p>
+            <div class="movie-rating">
+              <span>⭐</span>
+              <span>${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Function to display movie of the day
+    async function loadMovieOfTheDay() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/movie-of-the-day`);
+        const data = await response.json();
+        
+        if (data.success && data.movie) {
+          const movieCard = createMovieCard(data.movie);
+          document.getElementById('movie-of-the-day').innerHTML = movieCard;
+        } else {
+          document.getElementById('movie-of-the-day').innerHTML = 
+            '<div class="error-message">Error loading movie of the day</div>';
+        }
+      } catch (error) {
+        console.error('Error loading movie of the day:', error);
+        document.getElementById('movie-of-the-day').innerHTML = 
+          '<div class="error-message">Error loading movie of the day</div>';
+      }
+    }
+
+    // Function to load popular movies
+    async function loadPopularMovies() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/popular`);
+        const data = await response.json();
+        
+        if (data.success && data.movies && data.movies.length > 0) {
+          const moviesHTML = data.movies.map(movie => createMovieCard(movie)).join('');
+          document.getElementById('popular-movies').innerHTML = moviesHTML;
+        } else {
+          document.getElementById('popular-movies').innerHTML = 
+            '<div class="error-message">No popular movies found</div>';
+        }
+      } catch (error) {
+        console.error('Error loading popular movies:', error);
+        document.getElementById('popular-movies').innerHTML = 
+          '<div class="error-message">Error loading popular movies</div>';
+      }
+    }
+
+    // Function to load new releases
+    async function loadNewReleases() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/new-releases`);
+        const data = await response.json();
+        
+        if (data.success && data.movies && data.movies.length > 0) {
+          const moviesHTML = data.movies.map(movie => createMovieCard(movie)).join('');
+          document.getElementById('new-releases').innerHTML = moviesHTML;
+        } else {
+          document.getElementById('new-releases').innerHTML = 
+            '<div class="error-message">No new releases found</div>';
+        }
+      } catch (error) {
+        console.error('Error loading new releases:', error);
+        document.getElementById('new-releases').innerHTML = 
+          '<div class="error-message">Error loading new releases</div>';
+      }
+    }
+
+    // Function to search movies
+    async function searchMovies() {
+      // Get search query from either input field
+      const navbarQuery = document.getElementById('searchInput').value.trim();
+      const heroQuery = document.getElementById('search-input').value.trim();
+      const query = navbarQuery || heroQuery;
+      
+      if (!query) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.success && data.movies && data.movies.length > 0) {
+          const moviesHTML = data.movies.map(movie => createMovieCard(movie)).join('');
+          document.getElementById('popular-movies').innerHTML = `
+            <h3>Search Results for "${query}"</h3>
+            ${moviesHTML}
+          `;
+        } else {
+          document.getElementById('popular-movies').innerHTML = 
+            `<div class="error-message">No movies found for "${query}"</div>`;
+        }
+      } catch (error) {
+        console.error('Error searching movies:', error);
+        document.getElementById('popular-movies').innerHTML = 
+          '<div class="error-message">Error searching movies</div>';
+      }
+    }
+
+    // Load all content when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMovieOfTheDay();
+      loadPopularMovies();
+      loadNewReleases();
+    });
+  </script>
+</body>
+</html>

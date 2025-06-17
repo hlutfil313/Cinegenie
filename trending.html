@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trending Movies - CineGenie</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="/homepage">CineGenie</a>
+            </div>
+            <div class="nav-links">
+                <a href="/homepage">Home</a>
+                <a href="/trending" class="active">Trending</a>
+                <a href="/new-releases">New Releases</a>
+                <a href="/recommendation">Recommendations</a>
+                <a href="/my_list">My List</a>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Search movies...">
+                <button onclick="searchMovies()">Search</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="trending-section">
+            <h1>Trending Movies</h1>
+            <div class="trending-filters">
+                <button class="filter-btn active" data-filter="day">Today</button>
+                <button class="filter-btn" data-filter="week">This Week</button>
+            </div>
+            <div class="movies-grid" id="trendingMovies"></div>
+        </section>
+    </main>
+
+    <script>
+        const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+        const DEFAULT_POSTER = '/static/images/no-poster.svg';
+
+        async function loadTrendingMovies() {
+            const container = document.getElementById('trendingMovies');
+            container.innerHTML = '<div class="loading">Loading trending movies...</div>';
+
+            try {
+                const response = await fetch('/api/trending');
+                const data = await response.json();
+                
+                if (response.ok && data.movies) {
+                    displayMovies(data.movies);
+                } else {
+                    container.innerHTML = `
+                        <div class="error-message">
+                            ${data.error || 'Failed to load trending movies'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="error-message">
+                        Failed to load trending movies. Please try again.
+                    </div>
+                `;
+            }
+        }
+
+        function displayMovies(movies) {
+            const container = document.getElementById('trendingMovies');
+            if (!movies || movies.length === 0) {
+                container.innerHTML = `
+                    <div class="no-movies">
+                        No trending movies found.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            movies.forEach(movie => {
+                const card = createMovieCard(movie);
+                container.appendChild(card);
+            });
+        }
+
+        function createMovieCard(movie) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            card.onclick = () => window.location.href = `/movie-details?id=${movie.id}`;
+            
+            const posterPath = movie.poster_path 
+                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                : '/static/images/no-poster.jpg';
+            
+            card.innerHTML = `
+                <img src="${posterPath}" alt="${movie.title}" onerror="this.src='/static/images/no-poster.jpg'">
+                <div class="movie-info">
+                    <h3>${movie.title}</h3>
+                    <p>${movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}</p>
+                    <div class="movie-rating">
+                        <span>★</span>
+                        <span>${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+                    </div>
+                    <button class="add-to-list-btn" onclick="event.stopPropagation(); toggleMyList(${movie.id}, '${movie.title.replace(/'/g, "\\'")}', '${movie.poster_path || ''}', '${movie.release_date || ''}')">
+                        ${isInMyList(movie.id) ? 'Remove from List' : 'Add to List'}
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function isInMyList(movieId) {
+            const myList = JSON.parse(localStorage.getItem('myList') || '[]');
+            return myList.some(movie => movie.id === movieId);
+        }
+
+        function toggleMyList(movieId, title, posterPath, releaseDate) {
+            let myList = JSON.parse(localStorage.getItem('myList') || '[]');
+            const button = event.target;
+            
+            if (isInMyList(movieId)) {
+                myList = myList.filter(movie => movie.id !== movieId);
+                button.textContent = 'Add to List';
+            } else {
+                myList.push({
+                    id: movieId,
+                    title: title,
+                    poster_path: posterPath,
+                    release_date: releaseDate
+                });
+                button.textContent = 'Remove from List';
+            }
+            
+            localStorage.setItem('myList', JSON.stringify(myList));
+        }
+
+        function searchMovies() {
+            const query = document.getElementById('searchInput').value;
+            if (query.trim()) {
+                window.location.href = `/search?q=${encodeURIComponent(query)}`;
+            }
+        }
+
+        // Add event listeners for filter buttons
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                loadTrendingMovies();
+            });
+        });
+
+        // Load trending movies when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTrendingMovies();
+        });
+    </script>
+</body>
+</html> 

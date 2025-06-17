@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="50" viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .logo-text { font-family: 'Poppins', sans-serif; font-weight: 700; }
+        .highlight { fill: #e50914; }
+        .normal { fill: #ffffff; }
+    </style>
+    <text x="10" y="35" class="logo-text">
+        <tspan class="highlight">CINE</tspan><tspan class="normal">GENIE</tspan>
+    </text>
+    <path d="M190 10 L190 40" stroke="#e50914" stroke-width="2"/>
+    <circle cx="190" cy="25" r="3" fill="#e50914"/>
+</svg> 

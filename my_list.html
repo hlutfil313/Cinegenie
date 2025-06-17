@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My List - CineGenie</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        :root {
+            --black: #141414;
+            --white: #fff;
+            --red: #e50914;
+            --gray-light: #b3b3b3;
+            --gray-dark: #404040;
+            --shadow-glow: 0 0 10px rgba(229, 9, 20, 0.8);
+            --transition-fast: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Reset */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--black);
+            color: var(--white);
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* Navbar */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: rgba(20, 20, 20, 0.85);
+            backdrop-filter: saturate(180%) blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 2rem;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--red);
+            letter-spacing: 0.05em;
+            user-select: none;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav a {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--white);
+            transition: color var(--transition-fast);
+        }
+
+        nav a:hover,
+        nav a:focus {
+            color: var(--red);
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem;
+        }
+
+        .list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .movie-card {
+            background-color: #222;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.05);
+        }
+
+        .movie-card img {
+            width: 100%;
+            display: block;
+        }
+
+        .movie-title {
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+        .remove-btn {
+            background: #e50914;
+            border: none;
+            color: white;
+            padding: 0.3rem 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .empty-message {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #bbb;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="/homepage">CineGenie</a>
+            </div>
+            <div class="nav-links">
+                <a href="/homepage">Home</a>
+                <a href="/trending">Trending</a>
+                <a href="/new-releases">New Releases</a>
+                <a href="/recommendation">Recommendations</a>
+                <a href="/my_list" class="active">My List</a>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Search movies...">
+                <button onclick="searchMovies()">Search</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="my-list-section">
+            <h2>My Watchlist</h2>
+            <div class="movie-grid" id="myList">
+                <!-- Movies will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Load saved movies when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMyList();
+        });
+
+        function loadMyList() {
+            const savedMovies = JSON.parse(localStorage.getItem('myList') || '[]');
+            const moviesContainer = document.getElementById('myList');
+            moviesContainer.innerHTML = '';
+
+            if (savedMovies.length === 0) {
+                moviesContainer.innerHTML = '<p class="no-movies">Your watchlist is empty. Add some movies to get started!</p>';
+                return;
+            }
+
+            savedMovies.forEach(movie => {
+                const movieCard = createMovieCard(movie);
+                moviesContainer.appendChild(movieCard);
+            });
+        }
+
+        function createMovieCard(movie) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            card.onclick = () => window.location.href = `/movie-details?id=${movie.id}`;
+            
+            const posterPath = movie.poster_path 
+                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                : '/static/images/no-poster.jpg';
+            
+            card.innerHTML = `
+                <img src="${posterPath}" alt="${movie.title}" onerror="this.src='/static/images/no-poster.jpg'">
+                <div class="movie-info">
+                    <h3>${movie.title}</h3>
+                    <p>${movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}</p>
+                    <div class="movie-rating">
+                        <span>★</span>
+                        <span>${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+                    </div>
+                    <button class="remove-btn" onclick="event.stopPropagation(); removeFromList(${movie.id})">Remove from List</button>
+                </div>
+            `;
+            return card;
+        }
+
+        function removeFromList(movieId) {
+            let savedMovies = JSON.parse(localStorage.getItem('myList') || '[]');
+            savedMovies = savedMovies.filter(movie => movie.id !== movieId);
+            localStorage.setItem('myList', JSON.stringify(savedMovies));
+            loadMyList();
+        }
+
+        function searchMovies() {
+            const query = document.getElementById('searchInput').value;
+            if (query.trim()) {
+                window.location.href = `/search?q=${encodeURIComponent(query)}`;
+            }
+        }
+    </script>
+</body>
+
+</html>
