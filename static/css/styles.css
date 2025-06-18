@@ -20,6 +20,7 @@ body {
     background-color: var(--background-color);
     color: var(--text-color);
     line-height: 1.6;
+    overflow-x: hidden;
 }
 
 /* Header styles */
@@ -33,6 +34,7 @@ header {
     width: 100%;
     top: 0;
     z-index: 1000;
+    backdrop-filter: blur(10px);
 }
 
 .logo {
@@ -69,6 +71,7 @@ nav a:hover {
     text-align: center;
     color: white;
     margin-bottom: 2rem;
+    padding-top: 80px;
 }
 
 .hero-content {
@@ -167,6 +170,7 @@ section h2 {
     margin: 15px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
+    flex-shrink: 0;
 }
 
 .movie-card:hover {
@@ -1629,5 +1633,814 @@ section h2 {
 
     .movie-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Large tablets and small desktops */
+@media (max-width: 1024px) {
+    .hero h1 {
+        font-size: 3rem;
+    }
+    
+    .hero p {
+        font-size: 1.3rem;
+    }
+    
+    .search-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .search-container input,
+    .search-container button {
+        width: 100%;
+    }
+    
+    .movie-card {
+        width: 240px;
+    }
+    
+    .movie-card img {
+        height: 350px;
+    }
+    
+    .navbar {
+        padding: 0.8rem 1.5rem;
+    }
+    
+    .nav-links {
+        gap: 1.5rem;
+    }
+    
+    .nav-links a {
+        font-size: 0.9rem;
+    }
+}
+
+/* Tablets */
+@media (max-width: 768px) {
+    .hero {
+        height: 50vh;
+        padding-top: 70px;
+    }
+    
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+    
+    .hero p {
+        font-size: 1.1rem;
+    }
+    
+    .search-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .search-container input,
+    .search-container button {
+        width: 100%;
+    }
+    
+    section {
+        padding: 2rem 1rem;
+    }
+    
+    section h2 {
+        font-size: 1.5rem;
+    }
+    
+    .movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .movie-card {
+        width: 200px;
+        margin: 10px;
+    }
+    
+    .movie-card img {
+        height: 300px;
+    }
+    
+    /* Navigation for mobile */
+    .navbar {
+        padding: 0.8rem 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .nav-brand {
+        font-size: 1.2rem;
+    }
+    
+    .nav-links {
+        display: none; /* Hide on mobile, will be replaced with hamburger menu */
+    }
+    
+    .nav-search {
+        width: 100%;
+        margin-top: 0.5rem;
+        order: 3;
+    }
+    
+    .nav-search input {
+        width: 100%;
+        font-size: 0.9rem;
+    }
+    
+    .nav-search button {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Recommendation page mobile */
+    .recommendation-page {
+        padding: 1rem;
+    }
+    
+    .recommendation-box {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .mood-selector,
+    .genre-selector {
+        gap: 0.5rem;
+    }
+    
+    .mood-btn,
+    .genre-btn {
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Chat interface mobile */
+    .chat-container {
+        padding: 0.8rem;
+    }
+    
+    .chat-history {
+        height: 300px;
+    }
+    
+    .chat-message {
+        max-width: 90%;
+        padding: 0.8rem;
+    }
+    
+    .chat-input-container input {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .chat-input-container button {
+        padding: 0.8rem;
+    }
+    
+    /* Movie details mobile */
+    .movie-details-container {
+        padding: 1rem;
+    }
+    
+    .movie-details {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .movie-poster {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .movie-poster img {
+        width: 100%;
+        height: auto;
+    }
+    
+    .movie-info h1 {
+        font-size: 1.8rem;
+    }
+    
+    .movie-meta {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .movie-genres {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .genre-tag {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.8rem;
+    }
+    
+    .cast-list {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+    
+    .cast-member img {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .cast-member span {
+        font-size: 0.8rem;
+    }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+    .hero {
+        height: 40vh;
+        padding-top: 60px;
+    }
+    
+    .hero h1 {
+        font-size: 2rem;
+    }
+    
+    .hero p {
+        font-size: 1rem;
+    }
+    
+    .hero-content {
+        padding: 1rem;
+    }
+    
+    section {
+        padding: 1.5rem 0.8rem;
+    }
+    
+    section h2 {
+        font-size: 1.3rem;
+    }
+    
+    .movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.8rem;
+    }
+    
+    .movie-card {
+        width: 150px;
+        margin: 8px;
+    }
+    
+    .movie-card img {
+        height: 220px;
+    }
+    
+    .movie-card .movie-info {
+        padding: 0.8rem;
+    }
+    
+    .movie-card h3 {
+        font-size: 0.9rem;
+    }
+    
+    .movie-card p {
+        font-size: 0.8rem;
+    }
+    
+    /* Navigation mobile */
+    .navbar {
+        padding: 0.6rem 0.8rem;
+    }
+    
+    .nav-brand {
+        font-size: 1.1rem;
+    }
+    
+    .nav-search input {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+    }
+    
+    .nav-search button {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Recommendation page mobile */
+    .recommendation-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .recommendation-box {
+        padding: 1rem;
+    }
+    
+    .recommendation-box h2 {
+        font-size: 1.2rem;
+    }
+    
+    .mood-btn,
+    .genre-btn {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+        margin: 0.2rem;
+    }
+    
+    .mood-selector,
+    .genre-selector {
+        gap: 0.3rem;
+    }
+    
+    /* Chat interface mobile */
+    .chat-history {
+        height: 250px;
+        padding: 0.6rem;
+    }
+    
+    .chat-message {
+        max-width: 95%;
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+    
+    .chat-input-container input {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+    }
+    
+    .chat-input-container button {
+        padding: 0.6rem;
+    }
+    
+    .example-prompts {
+        padding: 0.8rem;
+    }
+    
+    .example-prompts h3 {
+        font-size: 1rem;
+    }
+    
+    .example-prompts li {
+        font-size: 0.8rem;
+        padding: 0.3rem;
+    }
+    
+    /* Movie details mobile */
+    .movie-info h1 {
+        font-size: 1.5rem;
+    }
+    
+    .movie-meta {
+        font-size: 0.8rem;
+    }
+    
+    .movie-overview {
+        font-size: 0.9rem;
+    }
+    
+    .cast-list {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.8rem;
+    }
+    
+    .cast-member img {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .cast-member span {
+        font-size: 0.7rem;
+    }
+    
+    .add-to-list-btn {
+        padding: 0.8rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Extra small phones */
+@media (max-width: 360px) {
+    .hero h1 {
+        font-size: 1.8rem;
+    }
+    
+    .hero p {
+        font-size: 0.9rem;
+    }
+    
+    .movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.6rem;
+    }
+    
+    .movie-card {
+        width: 120px;
+        margin: 6px;
+    }
+    
+    .movie-card img {
+        height: 180px;
+    }
+    
+    .movie-card .movie-info {
+        padding: 0.6rem;
+    }
+    
+    .movie-card h3 {
+        font-size: 0.8rem;
+    }
+    
+    .movie-card p {
+        font-size: 0.7rem;
+    }
+    
+    .mood-btn,
+    .genre-btn {
+        padding: 0.5rem 0.6rem;
+        font-size: 0.7rem;
+        margin: 0.1rem;
+    }
+    
+    .chat-history {
+        height: 200px;
+    }
+    
+    .chat-message {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+}
+
+/* Landscape orientation for phones */
+@media (max-width: 768px) and (orientation: landscape) {
+    .hero {
+        height: 30vh;
+    }
+    
+    .hero h1 {
+        font-size: 2rem;
+    }
+    
+    .hero p {
+        font-size: 1rem;
+    }
+    
+    .movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+    
+    .chat-history {
+        height: 200px;
+    }
+}
+
+/* iPad and tablet specific */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+    
+    .movie-card {
+        width: 220px;
+    }
+    
+    .movie-card img {
+        height: 320px;
+    }
+    
+    .chat-history {
+        height: 350px;
+    }
+    
+    .recommendation-box {
+        padding: 2rem;
+    }
+}
+
+/* Large screens */
+@media (min-width: 1200px) {
+    .hero h1 {
+        font-size: 4rem;
+    }
+    
+    .hero p {
+        font-size: 1.6rem;
+    }
+    
+    .movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    
+    .movie-card {
+        width: 280px;
+    }
+    
+    .movie-card img {
+        height: 400px;
+    }
+    
+    .chat-history {
+        height: 450px;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .movie-card:hover {
+        transform: none;
+    }
+    
+    .movie-card:active {
+        transform: scale(0.98);
+    }
+    
+    .mood-btn:hover,
+    .genre-btn:hover {
+        background-color: var(--primary-color);
+    }
+    
+    .mood-btn:active,
+    .genre-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .chat-input-container button:hover {
+        background: var(--primary-color);
+    }
+    
+    .chat-input-container button:active {
+        transform: scale(0.95);
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .movie-card img {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .movie-card:hover {
+        transform: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-color: #0a0a0a;
+        --card-background: #1a1a1a;
+    }
+}
+
+/* Print styles */
+@media print {
+    .navbar,
+    .hero,
+    .search-container,
+    .chat-container,
+    .mood-selector,
+    .genre-selector {
+        display: none;
+    }
+    
+    .movie-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+
+/* Mobile hamburger menu */
+.mobile-menu-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 10;
+}
+
+.mobile-menu-btn span {
+    width: 100%;
+    height: 3px;
+    background: var(--text-color);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.mobile-menu-btn.active span:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.mobile-menu-btn.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-btn.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Mobile navigation styles */
+@media (max-width: 768px) {
+    .mobile-menu-btn {
+        display: flex;
+    }
+    
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 80%;
+        max-width: 300px;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(10px);
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        padding: 80px 2rem 2rem;
+        transition: right 0.3s ease;
+        z-index: 1000;
+        gap: 1.5rem;
+    }
+    
+    .nav-links.mobile-active {
+        right: 0;
+    }
+    
+    .nav-links a {
+        font-size: 1.1rem;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        width: 100%;
+        text-align: left;
+    }
+    
+    .nav-links a:last-child {
+        border-bottom: none;
+    }
+    
+    /* Overlay for mobile menu */
+    .nav-links::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: -1;
+    }
+    
+    .nav-links.mobile-active::before {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/* Mobile menu animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+.nav-links.mobile-active {
+    animation: slideInRight 0.3s ease;
+}
+
+.nav-links:not(.mobile-active) {
+    animation: slideOutRight 0.3s ease;
+}
+
+/* Touch-friendly button sizes */
+@media (max-width: 768px) {
+    button, 
+    .mood-btn, 
+    .genre-btn,
+    .add-to-list-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    input, 
+    textarea {
+        min-height: 44px;
+    }
+    
+    .movie-card {
+        cursor: pointer;
+    }
+    
+    .movie-card:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 480px) {
+    /* Prevent zoom on input focus */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    textarea {
+        font-size: 16px;
+    }
+    
+    /* Optimize scrolling */
+    .row {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+    
+    /* Better touch targets */
+    .movie-card {
+        margin: 5px;
+    }
+    
+    .mood-btn,
+    .genre-btn {
+        margin: 3px;
+        padding: 12px 16px;
+    }
+    
+    /* Optimize chat interface */
+    .chat-input-container {
+        position: sticky;
+        bottom: 0;
+        background: var(--background-color);
+        padding: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .chat-history {
+        padding-bottom: 80px;
+    }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+    .nav-links {
+        width: 60%;
+        max-width: 250px;
+    }
+    
+    .hero {
+        height: 25vh;
+    }
+    
+    .chat-history {
+        height: 150px;
+    }
+}
+
+/* High refresh rate displays */
+@media (min-resolution: 120dpi) {
+    .movie-card,
+    .mood-btn,
+    .genre-btn {
+        will-change: transform;
+    }
+}
+
+/* Battery saver mode */
+@media (prefers-reduced-data: reduce) {
+    .movie-card img {
+        loading: lazy;
+    }
+    
+    .hero {
+        background-image: none;
+        background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
     }
 } 

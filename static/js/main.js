@@ -128,4 +128,206 @@ function showNotification(message) {
     setTimeout(() => {
         notification.remove();
     }, 3000);
-} 
+}
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/js/sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful:', registration.scope);
+      })
+      .catch(error => {
+        console.log('ServiceWorker registration failed:', error);
+      });
+  });
+}
+
+// PWA Installation prompt
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  
+  // Show install button if available
+  const installButton = document.getElementById('installButton');
+  if (installButton) {
+    installButton.style.display = 'block';
+    installButton.addEventListener('click', () => {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        deferredPrompt = null;
+        installButton.style.display = 'none';
+      });
+    });
+  }
+});
+
+// Mobile navigation functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Create mobile menu button
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        const mobileMenuBtn = document.createElement('button');
+        mobileMenuBtn.className = 'mobile-menu-btn';
+        mobileMenuBtn.innerHTML = `
+            <span></span>
+            <span></span>
+            <span></span>
+        `;
+        mobileMenuBtn.setAttribute('aria-label', 'Toggle mobile menu');
+        
+        // Insert mobile menu button before nav-links
+        const navLinks = navbar.querySelector('.nav-links');
+        if (navLinks) {
+            navbar.insertBefore(mobileMenuBtn, navLinks);
+            
+            // Add mobile menu functionality
+            mobileMenuBtn.addEventListener('click', function() {
+                navLinks.classList.toggle('mobile-active');
+                mobileMenuBtn.classList.toggle('active');
+            });
+            
+            // Close mobile menu when clicking on a link
+            navLinks.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    navLinks.classList.remove('mobile-active');
+                    mobileMenuBtn.classList.remove('active');
+                }
+            });
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!navbar.contains(e.target)) {
+                    navLinks.classList.remove('mobile-active');
+                    mobileMenuBtn.classList.remove('active');
+                }
+            });
+        }
+    }
+    
+    // Add touch gestures for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    document.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    
+    document.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+    
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+            const navLinks = document.querySelector('.nav-links');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (diff > 0 && navLinks.classList.contains('mobile-active')) {
+                // Swipe left - close menu
+                navLinks.classList.remove('mobile-active');
+                mobileMenuBtn.classList.remove('active');
+            } else if (diff < 0 && !navLinks.classList.contains('mobile-active')) {
+                // Swipe right - open menu
+                navLinks.classList.add('mobile-active');
+                mobileMenuBtn.classList.add('active');
+            }
+        }
+    }
+    
+    // Optimize images for mobile
+    const movieCards = document.querySelectorAll('.movie-card img');
+    movieCards.forEach(img => {
+        img.addEventListener('load', function() {
+            this.style.opacity = '1';
+        });
+        
+        img.addEventListener('error', function() {
+            this.src = '/static/images/no-poster.svg';
+        });
+    });
+    
+    // Add lazy loading for better mobile performance
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove('lazy');
+                    imageObserver.unobserve(img);
+                }
+            });
+        });
+        
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+    
+    // Optimize chat interface for mobile
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        // Auto-resize chat input
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+        
+        // Focus chat input when tapping on chat container
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            chatContainer.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    chatInput.focus();
+                }
+            });
+        }
+    }
+    
+    // Add pull-to-refresh functionality for mobile
+    let startY = 0;
+    let currentY = 0;
+    let pullDistance = 0;
+    const pullThreshold = 100;
+    
+    document.addEventListener('touchstart', function(e) {
+        if (window.scrollY === 0) {
+            startY = e.touches[0].clientY;
+        }
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (window.scrollY === 0 && startY > 0) {
+            currentY = e.touches[0].clientY;
+            pullDistance = currentY - startY;
+            
+            if (pullDistance > 0) {
+                e.preventDefault();
+                document.body.style.transform = `translateY(${Math.min(pullDistance * 0.5, pullThreshold)}px)`;
+            }
+        }
+    });
+    
+    document.addEventListener('touchend', function() {
+        if (pullDistance > pullThreshold) {
+            // Trigger refresh
+            window.location.reload();
+        }
+        
+        // Reset
+        document.body.style.transform = '';
+        startY = 0;
+        pullDistance = 0;
+    });
+}); 
