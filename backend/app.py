@@ -3,9 +3,11 @@ from flask_cors import CORS
 from utils.tmdb_client import TMDBClient
 from models.recommender import MovieRecommender
 from models.user import User
+from models.ai_recommender import AIRecommender
 import os
 from dotenv import load_dotenv
 import logging
+import asyncio
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -30,12 +32,14 @@ app.secret_key = os.urandom(24)  # Required for session management
 
 # Initialize clients
 try:
-    tmdb_client = TMDBClient()
-    user_model = User()
+    user_model = User()  # Initialize User model first
+    tmdb_client = TMDBClient(api_key)  # Pass the api_key to TMDBClient
     recommender = MovieRecommender(tmdb_client)
+    ai_recommender = AIRecommender(recommender)
     logger.info("Clients initialized successfully")
 except Exception as e:
     logger.error(f"Error initializing clients: {str(e)}")
+    raise  # Re-raise the exception to prevent the app from starting with uninitialized clients
 
 # Register endpoint
 @app.route('/api/register', methods=['POST'])
@@ -260,7 +264,7 @@ def get_recommendations():
                 'error': 'No recommendation criteria provided'
             }), 400
         
-        recommender = MovieRecommender()
+        recommender = MovieRecommender(tmdb_client)
         recommendations = recommender.get_recommendations(movie_id, mood, genre)
         return jsonify({
             'success': True,
@@ -362,7 +366,7 @@ def get_watchlist():
 @app.route('/api/recommendations/mood/<mood>')
 def get_mood_recommendations(mood):
     try:
-        recommender = MovieRecommender()
+        recommender = MovieRecommender(tmdb_client)
         movies = recommender.get_mood_recommendations(mood)
         
         return jsonify({
@@ -379,7 +383,7 @@ def get_mood_recommendations(mood):
 @app.route('/api/recommendations/genre/<genre>')
 def get_genre_recommendations(genre):
     try:
-        recommender = MovieRecommender()
+        recommender = MovieRecommender(tmdb_client)
         movies = recommender.get_genre_recommendations(genre)
         
         return jsonify({
@@ -437,36 +441,117 @@ def get_movie_details(movie_id):
 @app.route('/api/recommendations/ai', methods=['POST'])
 def get_ai_recommendations():
     try:
+        logger.info("AI recommendations endpoint called")
         data = request.get_json()
+        logger.info(f"Received data: {data}")
+        
         preferences = data.get('preferences', {})
         mood = preferences.get('mood')
         genres = preferences.get('genres', [])
         
+        logger.info(f"Processing preferences - mood: {mood}, genres: {genres}")
+        
         # If both mood and genres are provided, prioritize mood
         if mood:
+            logger.info(f"Getting recommendations for mood: {mood}")
             recommendations = recommender.get_recommendations(mood=mood)
         elif genres:
             # Take the first genre if multiple are provided
+            logger.info(f"Getting recommendations for genre: {genres[0]}")
             recommendations = recommender.get_recommendations(genre=genres[0])
         else:
             # If no preferences provided, return popular movies
+            logger.info("No preferences provided, getting popular movies")
             recommendations = recommender.get_recommendations()
         
+        logger.info(f"Found {len(recommendations) if recommendations else 0} recommendations")
+        
         if not recommendations:
+            logger.warning("No recommendations found")
             return jsonify({
                 'success': False,
-                'error': 'No recommendations found. Try different preferences.'
+                'error': 'No recommendations found. Try different preferences.',
+                'debug_info': {
+                    'mood': mood,
+                    'genres': genres,
+                    'recommender_initialized': recommender is not None
+                }
             }), 404
         
         return jsonify({
             'success': True,
-            'movies': recommendations
+            'movies': recommendations,
+            'debug_info': {
+                'mood': mood,
+                'genres': genres,
+                'count': len(recommendations)
+            }
         })
     except Exception as e:
-        logger.error(f"Error getting AI recommendations: {str(e)}")
+        logger.error(f"Error getting AI recommendations: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': 'Error getting AI recommendations'
+            'error': f'Error getting AI recommendations: {str(e)}',
+            'debug_info': {
+                'exception_type': type(e).__name__,
+                'exception_message': str(e)
+            }
+        }), 500
+
+@app.route('/api/recommendations/chat-recommendations', methods=['POST'])
+def chat_recommendations():
+    try:
+        logger.info("Chat recommendations endpoint called")
+        data = request.get_json()
+        logger.info(f"Received chat data: {data}")
+        
+        user_input = data.get('user_input')
+        if not user_input:
+            logger.warning("No user_input provided")
+            return jsonify({
+                'success': False,
+                'error': 'user_input is required'
+            }), 400
+        
+        logger.info(f"Processing user input: {user_input}")
+        
+        # Check if AI recommender is properly initialized
+        if not hasattr(ai_recommender, 'model'):
+            logger.error("AI recommender model not initialized - missing GOOGLE_API_KEY")
+            return jsonify({
+                'success': False,
+                'error': 'AI service not available. Please check configuration.',
+                'debug_info': {
+                    'ai_recommender_initialized': hasattr(ai_recommender, 'model'),
+                    'google_api_key_loaded': bool(os.getenv('GOOGLE_API_KEY'))
+                }
+            }), 503
+        
+        # Call the async Gemini AI recommender
+        logger.info("Calling AI recommender...")
+        recommendations = asyncio.run(ai_recommender.get_chat_recommendations(user_input))
+        
+        logger.info(f"AI recommender returned {len(recommendations) if recommendations else 0} recommendations")
+        
+        return jsonify({
+            'success': True,
+            'recommendations': recommendations,
+            'debug_info': {
+                'user_input': user_input,
+                'recommendations_count': len(recommendations) if recommendations else 0
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error in chat recommendations: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': f'Error in chat recommendations: {str(e)}',
+            'debug_info': {
+                'exception_type': type(e).__name__,
+                'exception_message': str(e),
+                'ai_recommender_initialized': hasattr(ai_recommender, 'model') if 'ai_recommender' in locals() else False,
+                'google_api_key_loaded': bool(os.getenv('GOOGLE_API_KEY'))
+            }
         }), 500
 
 if __name__ == '__main__':

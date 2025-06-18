@@ -7,6 +7,7 @@
     <title>CineGenie - Movie Recommendations</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
 <body>
@@ -33,6 +34,32 @@
         <section class="recommendation-section">
             <h1>Movie Recommendations</h1>
             
+            <!-- Gemini AI Chat Recommendations -->
+            <div class="recommendation-box ai-chat-box">
+                <h2>Gemini AI Movie Recommendations</h2>
+                <p class="ai-description">Chat with our AI to get personalized movie recommendations based on your preferences.</p>
+                
+                <div class="chat-container">
+                    <div id="chatHistory" class="chat-history"></div>
+                    
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" placeholder="Describe what kind of movie you're looking for...">
+                        <button onclick="sendChatMessage()" id="sendButton">
+                            <span class="material-icons">send</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="example-prompts">
+                    <h3>Try asking for recommendations like:</h3>
+                    <ul>
+                        <li>"I want to watch something like Inception but less complicated"</li>
+                        <li>"Show me movies that would be good for a first date"</li>
+                        <li>"I'm feeling nostalgic for 90s movies"</li>
+                    </ul>
+                </div>
+            </div>
+
             <!-- Mood-based Recommendations -->
             <div class="recommendation-box">
                 <h2>How are you feeling today?</h2>
@@ -63,13 +90,6 @@
                     <button class="genre-btn" data-genre="thriller">Thriller</button>
                 </div>
                 <div id="genre-results" class="movie-grid"></div>
-            </div>
-
-            <!-- AI Recommendations -->
-            <div class="recommendation-box">
-                <h2>AI Recommendations</h2>
-                <p class="ai-description">Get personalized recommendations based on your mood and genre preferences.</p>
-                <div id="aiRecommendations" class="movie-grid"></div>
             </div>
         </section>
     </div>
@@ -183,6 +203,8 @@
                     genres: selectedGenres
                 };
 
+                console.log('Sending preferences:', preferences);
+
                 const response = await fetch('/api/recommendations/ai', {
                     method: 'POST',
                     headers: {
@@ -192,10 +214,16 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
+                
+                // Log debug info if available
+                if (data.debug_info) {
+                    console.log('Debug info:', data.debug_info);
+                }
                 
                 if (data.success && data.movies && data.movies.length > 0) {
                     container.innerHTML = '';
@@ -207,6 +235,7 @@
                     container.innerHTML = `
                         <div class="error-message">
                             ${data.error || 'No recommendations found. Try selecting different preferences.'}
+                            ${data.debug_info ? `<br><small>Debug: ${JSON.stringify(data.debug_info)}</small>` : ''}
                         </div>
                     `;
                 }
@@ -216,7 +245,9 @@
                     <div class="error-message">
                         Failed to get AI recommendations. Please try again.
                         <br>
-                        <small>${error.message}</small>
+                        <small>Error: ${error.message}</small>
+                        <br>
+                        <small>Check the console for more details.</small>
                     </div>
                 `;
             }
@@ -260,6 +291,269 @@
                 window.location.href = `/search?q=${encodeURIComponent(query)}`;
             }
         }
+
+        // Add new chat functionality
+        async function sendChatMessage() {
+            const chatInput = document.getElementById('chatInput');
+            const message = chatInput.value.trim();
+            
+            if (!message) return;
+
+            // Add user message to chat
+            addMessageToChat('user', message);
+            chatInput.value = '';
+
+            try {
+                const response = await fetch('/api/recommendations/chat-recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_input: message })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success && data.recommendations) {
+                    // Add AI response to chat
+                    if (data.recommendations.length > 0) {
+                        const message = data.recommendations[0].message || 'Here are some recommendations based on your request:';
+                        addMessageToChat('ai', message, data.recommendations.slice(1));
+                    } else {
+                        addMessageToChat('ai', 'I couldn\'t find any specific recommendations. Here are some popular movies you might enjoy.');
+                    }
+                    
+                    // Log debug info if available
+                    if (data.debug_info) {
+                        console.log('Debug info:', data.debug_info);
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to get recommendations');
+                }
+            } catch (error) {
+                console.error('Error getting chat recommendations:', error);
+                
+                // Show detailed error message
+                let errorMessage = 'Sorry, I encountered an error while getting recommendations.';
+                if (error.message.includes('AI service not available')) {
+                    errorMessage = 'AI service is currently unavailable. Please check if the GOOGLE_API_KEY is configured.';
+                } else if (error.message.includes('GOOGLE_API_KEY')) {
+                    errorMessage = 'AI service configuration error. Please contact support.';
+                }
+                
+                addMessageToChat('error', errorMessage);
+            }
+        }
+
+        function addMessageToChat(type, content, recommendations = null) {
+            const chatHistory = document.getElementById('chatHistory');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}-message`;
+            
+            let messageContent = `
+                <div class="message-content">
+                    <p>${content}</p>
+                </div>
+            `;
+
+            if (recommendations && recommendations.length > 0) {
+                messageContent += '<div class="recommendations-grid">';
+                recommendations.forEach(movie => {
+                    if (movie.title) {  // Only add if it's a movie object
+                        messageContent += createMovieCard(movie).outerHTML;
+                    }
+                });
+                messageContent += '</div>';
+            }
+
+            messageDiv.innerHTML = messageContent;
+            chatHistory.appendChild(messageDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // Add event listener for Enter key in chat input
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
     </script>
+
+    <style>
+        /* Add new styles for chat interface */
+        .ai-chat-box {
+            margin-bottom: 2rem;
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-container {
+            background: var(--background-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-history {
+            height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: var(--card-background);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) var(--background-color);
+        }
+
+        .chat-history::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-history::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+
+        .chat-history::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            max-width: 80%;
+            padding: 1rem;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .user-message {
+            margin-left: auto;
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .ai-message {
+            margin-right: auto;
+            background: var(--card-background);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .error-message {
+            background: rgba(229, 9, 20, 0.1);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input-container input {
+            flex: 1;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--card-background);
+            color: var(--text-color);
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input-container input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .chat-input-container input::placeholder {
+            color: var(--secondary-color);
+        }
+
+        .chat-input-container button {
+            padding: 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-input-container button:hover {
+            background: var(--hover-color);
+        }
+
+        .example-prompts {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--card-background);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .example-prompts h3 {
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+
+        .example-prompts ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .example-prompts li {
+            margin: 0.5rem 0;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .example-prompts li:hover {
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-message {
+                max-width: 90%;
+            }
+
+            .recommendations-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
 </body>
 </html>

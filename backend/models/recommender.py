@@ -304,4 +304,12 @@ class MovieRecommender:
         # Sort by rating and get top recommendations
         recommendations = filtered_movies.nlargest(n_recommendations, 'vote_average').to_dict('records')
         
-        return recommendations 
+        return recommendations
+
+    def get_popular_movies(self):
+        """Get popular movies as fallback"""
+        try:
+            return self.tmdb_client.get_popular_movies()[:10]
+        except Exception as e:
+            print(f"Error getting popular movies: {str(e)}")
+            return [] 

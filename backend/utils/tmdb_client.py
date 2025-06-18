@@ -12,39 +12,58 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 class TMDBClient:
-    def __init__(self):
+    def __init__(self, api_key: str):
+        """Initialize TMDB client with API key"""
+        self.api_key = api_key
+        self.base_url = "https://api.themoviedb.org/3"
+        self.genre_mapping = {
+            'action': 28,
+            'adventure': 12,
+            'animation': 16,
+            'comedy': 35,
+            'crime': 80,
+            'documentary': 99,
+            'drama': 18,
+            'family': 10751,
+            'fantasy': 14,
+            'history': 36,
+            'horror': 27,
+            'music': 10402,
+            'mystery': 9648,
+            'romance': 10749,
+            'science fiction': 878,
+            'tv movie': 10770,
+            'thriller': 53,
+            'war': 10752,
+            'western': 37
+        }
+        self.mood_mapping = {
+            'feel-good': [35, 10751],  # Comedy, Family
+            'uplifting': [18, 10751],  # Drama, Family
+            'heartwarming': [10749, 10751],  # Romance, Family
+            'nostalgic': [18, 10751],  # Drama, Family
+            'exciting': [28, 12, 53],  # Action, Adventure, Thriller
+            'relaxing': [18, 10749],  # Drama, Romance
+            'thought-provoking': [18, 9648],  # Drama, Mystery
+            'scary': [27, 53],  # Horror, Thriller
+            'romantic': [10749],  # Romance
+            'funny': [35],  # Comedy
+            'adventurous': [12, 28],  # Adventure, Action
+            'mysterious': [9648, 53],  # Mystery, Thriller
+            'dramatic': [18],  # Drama
+            'fantastical': [14, 12],  # Fantasy, Adventure
+            'historical': [36, 18],  # History, Drama
+            'suspenseful': [53, 9648],  # Thriller, Mystery
+            'emotional': [18, 10749],  # Drama, Romance
+            'inspiring': [18, 10751],  # Drama, Family
+            'dark': [27, 53, 80],  # Horror, Thriller, Crime
+            'lighthearted': [35, 10751]  # Comedy, Family
+        }
         self.tmdb = TMDb()
-        self.api_key = os.getenv('TMDB_API_KEY')
-        print(f"API Key loaded: {'Yes' if self.api_key else 'No'}")
-        if not self.api_key:
-            print("Warning: TMDB_API_KEY not found in environment variables")
         self.tmdb.api_key = self.api_key
         self.tmdb.language = 'en-US'
         self.movie_api = Movie()
-        self.base_url = "https://api.themoviedb.org/3"
         self.image_base_url = "https://image.tmdb.org/t/p/w500"
-        
-        # Genre mapping
-        self.genre_mapping = {
-            'action': 28,
-            'comedy': 35,
-            'drama': 18,
-            'horror': 27,
-            'romance': 10749,
-            'sci-fi': 878,
-            'thriller': 53
-        }
-        
-        # Mood to genre mapping
-        self.mood_mapping = {
-            'happy': [35, 10751],  # Comedy, Family
-            'sad': [18, 10749],    # Drama, Romance
-            'excited': [28, 12],   # Action, Adventure
-            'romantic': [10749, 35], # Romance, Comedy
-            'scared': [27, 53],    # Horror, Thriller
-            'inspired': [18, 99],  # Drama, Documentary
-            'relaxed': [35, 16]    # Comedy, Animation
-        }
         
         if not self.api_key:
             logger.error("TMDB API key not found in environment variables")
@@ -195,24 +214,48 @@ class TMDBClient:
 
     def get_movies_by_genre(self, genre_id, page=1):
         logger.info(f"Getting movies for genre ID: {genre_id}")
-        data = self._make_request('discover/movie', {
-            'with_genres': genre_id,
-            'page': page,
-            'sort_by': 'popularity.desc'
-        })
-        
-        if not data or 'results' not in data:
-            logger.error(f"No movies found for genre ID: {genre_id}")
+        try:
+            data = self._make_request('discover/movie', {
+                'with_genres': genre_id,
+                'page': page,
+                'sort_by': 'popularity.desc'
+            })
+            
+            if not data or 'results' not in data:
+                logger.error(f"No movies found for genre ID: {genre_id}")
+                return []
+            
+            movies = []
+            for movie in data['results'][:10]:  # Limit to 10 movies
+                try:
+                    # Get genre names from genre IDs
+                    genre_names = []
+                    for gid in movie.get('genre_ids', []):
+                        for name, id in self.genre_mapping.items():
+                            if id == gid:
+                                genre_names.append(name.title())
+                                break
+                    
+                    movie_data = {
+                        'id': movie['id'],
+                        'title': movie['title'],
+                        'overview': movie['overview'],
+                        'poster_path': movie.get('poster_path'),
+                        'release_date': movie.get('release_date'),
+                        'vote_average': movie.get('vote_average', 0),
+                        'genres': genre_names
+                    }
+                    movies.append(movie_data)
+                except Exception as e:
+                    logger.error(f"Error processing movie data: {str(e)}")
+                    continue
+            
+            logger.info(f"Found {len(movies)} movies for genre ID: {genre_id}")
+            return movies
+            
+        except Exception as e:
+            logger.error(f"Error getting movies by genre: {str(e)}")
             return []
-        
-        movies = []
-        for movie in data['results']:
-            movie_data = self.get_movie_details(movie['id'])
-            if movie_data:
-                movies.append(movie_data)
-        
-        logger.info(f"Found {len(movies)} movies for genre ID: {genre_id}")
-        return movies
 
     def get_movie_of_the_day(self):
         logger.info("Getting movie of the day")
