@@ -151,10 +151,21 @@ class TMDBClient:
             return []
         
         movies = []
-        for movie in data['results']:
-            movie_data = self.get_movie_details(movie['id'])
-            if movie_data:
+        for movie in data['results'][:20]:  # Limit to 20 movies for performance
+            try:
+                movie_data = {
+                    'id': movie['id'],
+                    'title': movie['title'],
+                    'overview': movie['overview'],
+                    'poster_path': movie.get('poster_path'),
+                    'release_date': movie.get('release_date'),
+                    'vote_average': movie.get('vote_average', 0),
+                    'genres': []  # We'll get genres from genre_ids if needed
+                }
                 movies.append(movie_data)
+            except Exception as e:
+                logger.error(f"Error processing movie data: {str(e)}")
+                continue
         
         logger.info(f"Found {len(movies)} popular movies")
         return movies
@@ -168,10 +179,21 @@ class TMDBClient:
             return []
         
         movies = []
-        for movie in data['results']:
-            movie_data = self.get_movie_details(movie['id'])
-            if movie_data:
+        for movie in data['results'][:20]:  # Limit to 20 movies for performance
+            try:
+                movie_data = {
+                    'id': movie['id'],
+                    'title': movie['title'],
+                    'overview': movie['overview'],
+                    'poster_path': movie.get('poster_path'),
+                    'release_date': movie.get('release_date'),
+                    'vote_average': movie.get('vote_average', 0),
+                    'genres': []  # We'll get genres from genre_ids if needed
+                }
                 movies.append(movie_data)
+            except Exception as e:
+                logger.error(f"Error processing movie data: {str(e)}")
+                continue
         
         logger.info(f"Found {len(movies)} trending movies")
         return movies
@@ -179,20 +201,29 @@ class TMDBClient:
     def get_new_releases(self):
         """Get new movie releases from TMDB."""
         try:
-            print("Fetching new releases")
+            logger.info("Fetching new releases")
             results = self.movie_api.upcoming()
-            movies = [{
-                'id': movie.id,
-                'title': movie.title,
-                'overview': movie.overview,
-                'poster_path': movie.poster_path,
-                'release_date': movie.release_date,
-                'vote_average': movie.vote_average
-            } for movie in results]
-            print(f"Found {len(movies)} new releases")
+            movies = []
+            
+            for movie in results[:20]:  # Limit to 20 movies for performance
+                try:
+                    movie_data = {
+                        'id': movie.id,
+                        'title': movie.title,
+                        'overview': movie.overview,
+                        'poster_path': movie.poster_path,
+                        'release_date': movie.release_date,
+                        'vote_average': movie.vote_average
+                    }
+                    movies.append(movie_data)
+                except Exception as e:
+                    logger.error(f"Error processing new release movie: {str(e)}")
+                    continue
+                    
+            logger.info(f"Found {len(movies)} new releases")
             return movies
         except Exception as e:
-            print(f"Error fetching new releases: {str(e)}")
+            logger.error(f"Error fetching new releases: {str(e)}")
             return []
 
     def get_similar_movies(self, movie_id):

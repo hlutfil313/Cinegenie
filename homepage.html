@@ -295,7 +295,8 @@
   </main>
 
   <script>
-    const API_BASE_URL = 'http://127.0.0.1:5000/api';
+    // Use relative URLs to work on both localhost and Render
+    const API_BASE_URL = '/api';
 
     // Function to display a movie card
     function createMovieCard(movie) {

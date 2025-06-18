@@ -181,12 +181,15 @@ def health_check():
 @app.route('/api/movie-of-the-day')
 def get_movie_of_the_day():
     try:
+        logger.info("API: Getting movie of the day")
         movie = tmdb_client.get_movie_of_the_day()
         if movie:
+            logger.info(f"API: Movie of the day: {movie.get('title', 'Unknown')}")
             return jsonify({
                 'success': True,
                 'movie': movie
             })
+        logger.error("API: No movie of the day available")
         return jsonify({
             'success': False,
             'error': 'No movie of the day available'
@@ -195,13 +198,16 @@ def get_movie_of_the_day():
         logger.error(f"Error getting movie of the day: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Error getting movie of the day'
+            'error': 'Error getting movie of the day',
+            'details': str(e)
         }), 500
 
 @app.route('/api/popular')
 def get_popular():
     try:
+        logger.info("API: Getting popular movies")
         movies = tmdb_client.get_popular_movies()
+        logger.info(f"API: Found {len(movies)} popular movies")
         return jsonify({
             'success': True,
             'movies': movies
@@ -210,13 +216,16 @@ def get_popular():
         logger.error(f"Error getting popular movies: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Error getting popular movies'
+            'error': 'Error getting popular movies',
+            'details': str(e)
         }), 500
 
 @app.route('/api/new-releases')
 def get_new_releases():
     try:
+        logger.info("API: Getting new releases")
         movies = tmdb_client.get_new_releases()
+        logger.info(f"API: Found {len(movies)} new releases")
         return jsonify({
             'success': True,
             'movies': movies
@@ -225,7 +234,8 @@ def get_new_releases():
         logger.error(f"Error getting new releases: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Error getting new releases'
+            'error': 'Error getting new releases',
+            'details': str(e)
         }), 500
 
 @app.route('/api/search')
